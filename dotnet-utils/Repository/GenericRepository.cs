@@ -131,7 +131,7 @@ namespace dotnet_utils.Repository
         /// <param name="predicate"></param>  
         /// <param name="include"></param>  
         /// <returns></returns>  
-        public IQueryable<TEntity> GetWithInclude(System.Linq.Expressions.Expression<Func<TEntity, bool>> predicate, params string[] include)
+        public IQueryable<TEntity> GetWithInclude(Expression<Func<TEntity, bool>> predicate, params string[] include)
         {
             IQueryable<TEntity> query = this.dbSet;
             query = include.Aggregate(query, (current, inc) => current.Include(inc));
