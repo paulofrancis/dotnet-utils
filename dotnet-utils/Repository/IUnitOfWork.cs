@@ -1,8 +1,13 @@
-﻿namespace dotnet_utils.Repository
+﻿using System.Threading.Tasks;
+
+namespace dotnet_utils.Repository
 {
     public interface IUnitOfWork
     {
         IGenericRepository<T> Repository<T>() where T : class;
-        void Save();
+        void Commit();
+        Task CommitAsync();
+        void Rollback();
+        Task RollbackAsync();
     }
 }

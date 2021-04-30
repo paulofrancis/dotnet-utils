@@ -1,32 +1,24 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
-using System.Data.Entity.Validation;
 using System.Linq;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace dotnet_utils.Repository
 {
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
-        private readonly ILog _log = null;
-        private Test_Entities _context = null;
+        private readonly SampleContext _context = null;
         private readonly Dictionary<Type, object> _repositories = new Dictionary<Type, object>();
 
         public UnitOfWork()
         {
-            _context = new Test_Entities();
-            _context.Database.CommandTimeout = 180;
-
-            if (_log == null)
-            {
-                log4net.Config.XmlConfigurator.Configure();
-                _log = LogManager.GetLogger(typeof(UnitOfWork));
-            }
+            _context = new SampleContext();
         }
 
         public IGenericRepository<T> Repository<T>() where T : class
         {
-            if (_repositories.Keys.Contains(typeof(T)) == true)
+            if (_repositories.Keys.Contains(typeof(T)))
             {
                 return _repositories[typeof(T)] as IGenericRepository<T>;
             }
@@ -36,31 +28,36 @@ namespace dotnet_utils.Repository
             return repo;
         }
 
-
+        /// <summary>  
+        /// Save method.  
+        /// </summary>  
+        public void Commit()
+        {
+            _context.Commit();
+        }
 
         /// <summary>  
         /// Save method.  
         /// </summary>  
-        public void Save()
+        public async Task CommitAsync()
         {
-            try
-            {
-                _context.SaveChanges();
-            }
-            catch (DbEntityValidationException e)
-            {
-                foreach (var eve in e.EntityValidationErrors)
-                {
-                    _log.ErrorFormat("{0}: Entity of type \"{1}\" in state \"{2}\" has the following validation errors:", DateTime.Now, eve.Entry.Entity.GetType().Name, eve.Entry.State);
+            await _context.CommitAsync();
+        }
 
-                    foreach (var ve in eve.ValidationErrors)
-                    {
-                        _log.ErrorFormat("- Property: \"{0}\", Error: \"{1}\"", ve.PropertyName, ve.ErrorMessage);
-                    }
-                }
+        /// <summary>
+        /// Rollback method.
+        /// </summary>
+        public void Rollback()
+        {
+            _context.Rollback();
+        }
 
-                throw e;
-            }
+        /// <summary>
+        /// Rollback method.
+        /// </summary>
+        public async Task RollbackAsync()
+        {
+            await _context.RollbackAsync();
         }
 
         private bool disposed = false;
@@ -71,15 +68,12 @@ namespace dotnet_utils.Repository
         /// <param name="disposing"></param>  
         protected virtual void Dispose(bool disposing)
         {
-            if (!this.disposed)
+            if (!disposed && disposing)
             {
-                if (disposing)
-                {
-                    System.Diagnostics.Debug.WriteLine("UnitOfWork is being disposed");
-                    _context.Dispose();
-                }
+                System.Diagnostics.Debug.WriteLine("UnitOfWork is being disposed");
+                _context.Dispose();
             }
-            this.disposed = true;
+            disposed = true;
         }
 
         /// <summary>  
